@@ -77,87 +77,100 @@ public:
 class PriorityQueueByList {
 private:
     struct Node {
-        int   value  = -1;
-        Node *parent = nullptr;
-        Node *left   = nullptr;
-        Node *right  = nullptr;
+        int   value  = -1;         // Giá trị của node
+        Node *parent = nullptr;   // Con trỏ trỏ tới node cha
+        Node *left   = nullptr;   // Con trỏ trỏ tới con trái
+        Node *right  = nullptr;   // Con trỏ trỏ tới con phải
     };
 
-    Node *root = nullptr;
-    Node *last = nullptr;
-    int   heapSize = 0;
+    Node *root = nullptr;          // Con trỏ tới node gốc của heap
+    Node *last = nullptr;          // Con trỏ tới node được thêm gần đây nhất
+    int   heapSize = 0;            // Kích thước của heap
 
+    // Duy trì tính chất heap sau khi thêm một phần tử
     void heapifyUp(Node *node) {
         while (node->parent and node->parent->value < node->value) {
+            // Hoán đổi giá trị của node với node cha nếu vi phạm tính chất heap
             std::swap(node->parent->value, node->value);
 
-            node = node->parent;
+            node = node->parent; // Di chuyển node lên trên
         }
     }
 
+    // Duy trì tính chất heap sau khi xóa phần tử
     void heapifyDown(Node* node) {
         while (node) {
-            Node *largest = node;
-            if (node->left  and node->left->value  > largest->value) largest = node->left;
-            if (node->right and node->right->value > largest->value) largest = node->right;
+            Node *largest = node; // Giả sử node hiện tại là lớn nhất
+            if (node->left  and node->left->value  > largest->value) largest = node->left; // So sánh với con trái
+            if (node->right and node->right->value > largest->value) largest = node->right; // So sánh với con phải
             
-            if (largest == node) break;
+            if (largest == node) break; // Nếu không cần hoán đổi, thoát vòng lặp
 
-            std::swap(largest->value, node->value);
-            node = largest;
+            std::swap(largest->value, node->value); // Hoán đổi giá trị với con lớn hơn
+            node = largest; // Di chuyển xuống node con
         }
     }
     
+    // Tìm vị trí chèn tiếp theo trong cây
     Node* getInsertionPoint() const {
-        Node* dummy = root;
+        Node* dummy = root; // Bắt đầu từ gốc
         int levelNodes = 1;
         while (dummy) {
-            if (not dummy->left ) return dummy;
-            if (not dummy->right) return dummy;
+            if (not dummy->left ) return dummy; // Nếu chưa có con trái, trả về
+            if (not dummy->right) return dummy; // Nếu chưa có con phải, trả về
 
-            dummy = dummy->left;
+            dummy = dummy->left; // Tiếp tục duyệt xuống con trái
         }
-        return nullptr;
+        return nullptr; // Trường hợp không tìm thấy (không xảy ra)
     }
 public:
+    // Kiểm tra heap có rỗng hay không
     bool empty() const { return root == nullptr; }
+
+    // Trả về kích thước của heap
     int size() const { return heapSize; }
 
+    // Thêm một phần tử mới vào heap
     void push(int x) {
-        Node *newNode = new Node(); newNode->value = x;
+        Node *newNode = new Node(); newNode->value = x; // Tạo node mới
 
         if (empty()) {
-            root = last = newNode;
+            root = last = newNode; // Nếu heap rỗng, node mới là gốc
         } else {
-            Node* parent = getInsertionPoint();
+            Node* parent = getInsertionPoint(); // Tìm vị trí chèn
 
             if (not parent->left) {
-                parent->left  = newNode;
+                parent->left  = newNode; // Chèn vào con trái
             } else {
-                parent->right = newNode;
+                parent->right = newNode; // Chèn vào con phải
             }
-            newNode->parent = parent;
-            last = newNode;
+            newNode->parent = parent; // Gán node cha
+            last = newNode;           // Cập nhật node cuối cùng
         }
-        heapSize++;
-        heapifyUp(newNode);
+        heapSize++; // Tăng kích thước heap
+        heapifyUp(newNode); // Duy trì tính chất heap
     }
 
+    // Lấy giá trị lớn nhất (gốc của heap)
     int top() const {
         if (empty()) throw std::runtime_error("Heap is empty");
         
         return root->value;
     }
 
+    // Xóa phần tử lớn nhất (gốc của heap)
     void pop() {
         if (empty()) throw std::runtime_error("Heap is empty");
 
         if (size() == 1) {
+            // Nếu chỉ có một phần tử, xóa node gốc
             delete root;
             root = last = nullptr;
         } else {
+            // Hoán đổi giá trị của gốc và node cuối cùng
             std::swap(root->value, last->value);
 
+            // Xóa node cuối cùng
             Node *parent = last->parent;
             if (parent->right == last) {
                 parent->right = nullptr;
@@ -166,6 +179,7 @@ public:
             }
             delete last;
 
+            // Tìm lại node cuối cùng mới
             Node *dummy = root;
             while (dummy->left or dummy->right) {
                 if (dummy->right) {
@@ -176,36 +190,42 @@ public:
             }
             last = dummy;
 
+            // Duy trì tính chất heap
             heapifyDown(root);
         }
 
-        heapSize--;
+        heapSize--; // Giảm kích thước heap
     }
 
+    // Xây dựng heap từ một mảng
     void build(std::vector<int> arr) {
-        for (const int x : arr) push(x);
+        for (const int x : arr) push(x); // Thêm từng phần tử vào heap
     }
 
+    // Hàm in cây theo kiểu duyệt trước
     void print(Node* node) const {
         if (node == nullptr) return;
 
-        std::cout << node->value << ' ';
-        print(node->left);
-        print(node->right);
+        std::cout << node->value << ' '; // In giá trị của node
+        print(node->left);  // In cây con trái
+        print(node->right); // In cây con phải
     }
 
+    // Hàm in toàn bộ heap
     void print() const {
         std::cout << "heap[] = { ";
-        if (empty()) std::cout << "Empty";
-        print(root);
+        if (empty()) std::cout << "Empty"; // Nếu heap rỗng
+        print(root); // Gọi hàm in đệ quy từ gốc
         std::cout << "}\n";
     }
 
+    // Xóa toàn bộ heap
     void remove() { 
-        while (root != nullptr) pop();
-        heapSize = 0;
+        while (root != nullptr) pop(); // Liên tục xóa phần tử gốc
+        heapSize = 0; // Đặt kích thước về 0
     }
 };
+
 
 template <class priority_queue>
 void demo(priority_queue pq) {
