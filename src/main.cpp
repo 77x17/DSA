@@ -66,7 +66,7 @@ public:
 
     void print() const {
         std::cout << "heap[] = { ";
-        if (empty()) std::cout << "Empty";
+        if (empty()) std::cout << "Empty ";
         for (int x : heap) std::cout << x << ' ';
         std::cout << "}\n";
     }
@@ -197,32 +197,33 @@ public:
         heapSize--; // Giảm kích thước heap
     }
 
-    // Xây dựng heap từ một mảng
-    void build(std::vector<int> arr) {
-        for (const int x : arr) push(x); // Thêm từng phần tử vào heap
-    }
-
-    // Hàm in cây theo kiểu duyệt trước
-    void print(Node* node) const {
-        if (node == nullptr) return;
-
-        std::cout << node->value << ' '; // In giá trị của node
-        print(node->left);  // In cây con trái
-        print(node->right); // In cây con phải
-    }
-
-    // Hàm in toàn bộ heap
-    void print() const {
-        std::cout << "heap[] = { ";
-        if (empty()) std::cout << "Empty"; // Nếu heap rỗng
-        print(root); // Gọi hàm in đệ quy từ gốc
-        std::cout << "}\n";
-    }
-
     // Xóa toàn bộ heap
     void remove() { 
         while (root != nullptr) pop(); // Liên tục xóa phần tử gốc
         heapSize = 0; // Đặt kích thước về 0
+    }
+
+    // Xây dựng heap từ một mảng
+    void build(std::vector<int> arr) {
+        remove();
+        for (const int x : arr) push(x); // Thêm từng phần tử vào heap
+    }
+    
+    // Hàm in toàn bộ heap
+    void print() const {
+        std::cout << "heap[] = { \n";
+        if (empty()) std::cout << "Empty "; // Nếu heap rỗng
+        
+        std::deque<Node*> dq;
+        dq.push_back(root);
+        while (dq.size()) {
+            Node* dummy = dq.front(); dq.pop_front();
+            std::cout << dummy->value << ' ';
+            if (dummy->left) dq.push_back(dummy->left);
+            if (dummy->right) dq.push_back(dummy->right);
+        }
+
+        std::cout << "}\n";
     }
 };
 
