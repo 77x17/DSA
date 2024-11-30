@@ -1,13 +1,14 @@
 import tkinter as tk
 from tkinter import messagebox
-import heapq
+import time
+
 
 class MaxHeapVisualizer:
     def __init__(self, root):
-        self.heap = []  # The underlying heap (negated for max-heap)
+        self.heap = []  # Max-heap array
         self.canvas = tk.Canvas(root, width=800, height=400, bg="white")
         self.canvas.pack()
-        
+
         # Notes for users
         note_label = tk.Label(root, text="Instructions:", font=("Arial", 12, "bold"))
         note_label.pack(anchor="w", padx=10, pady=(10, 0))
@@ -17,7 +18,7 @@ class MaxHeapVisualizer:
                         "4. Click 'Clear' to reset the heap.")
         instruction_label = tk.Label(root, text=instructions, justify="left", anchor="w", font=("Arial", 10))
         instruction_label.pack(anchor="w", padx=10, pady=(0, 10))
-        
+
         # Input and buttons for building the heap
         build_frame = tk.Frame(root)
         build_frame.pack(pady=5)
@@ -27,7 +28,7 @@ class MaxHeapVisualizer:
         self.build_entry.pack(side=tk.LEFT, padx=5)
         build_button = tk.Button(build_frame, text="Build Heap", command=self.build_heap)
         build_button.pack(side=tk.LEFT, padx=5)
-        
+
         # Input and buttons for pushing values
         push_frame = tk.Frame(root)
         push_frame.pack(pady=5)
@@ -37,7 +38,7 @@ class MaxHeapVisualizer:
         self.push_entry.pack(side=tk.LEFT, padx=5)
         push_button = tk.Button(push_frame, text="Push", command=self.push)
         push_button.pack(side=tk.LEFT, padx=5)
-        
+
         # Other controls
         control_frame = tk.Frame(root)
         control_frame.pack(pady=5)
@@ -45,7 +46,7 @@ class MaxHeapVisualizer:
         pop_button.pack(side=tk.LEFT, padx=5)
         clear_button = tk.Button(control_frame, text="Clear", command=self.clear)
         clear_button.pack(side=tk.LEFT, padx=5)
-        
+
         # Heap status
         self.status_label = tk.Label(root, text="Heap Status: []", anchor="w")
         self.status_label.pack(fill=tk.X, padx=10, pady=5)
@@ -54,8 +55,9 @@ class MaxHeapVisualizer:
         """Build the max-heap from an array of numbers."""
         try:
             numbers = list(map(int, self.build_entry.get().split()))
-            self.heap = [-num for num in numbers]  # Negate values for max-heap behavior
-            heapq.heapify(self.heap)
+            self.heap = []
+            for num in numbers:
+                self.push_to_heap(num)
             self.build_entry.delete(0, tk.END)
             self.display_heap()
         except ValueError:
@@ -65,8 +67,8 @@ class MaxHeapVisualizer:
         """Push a value into the max-heap."""
         try:
             value = int(self.push_entry.get())
-            heapq.heappush(self.heap, -value)  # Negate the value for max-heap
             self.push_entry.delete(0, tk.END)
+            self.push_to_heap(value)
             self.display_heap()
         except ValueError:
             messagebox.showerror("Invalid Input", "Please enter a valid integer.")
@@ -74,10 +76,56 @@ class MaxHeapVisualizer:
     def pop(self):
         """Pop the largest value from the max-heap."""
         if self.heap:
-            heapq.heappop(self.heap)  # Negated back to positive
+            self.pop_from_heap()
             self.display_heap()
         else:
             messagebox.showinfo("Heap Empty", "The heap is empty!")
+
+    def clear(self):
+        """Clear the heap."""
+        self.heap = []
+        self.display_heap()
+
+    def push_to_heap(self, value):
+        """Custom push operation for max-heap with animation."""
+        self.heap.append(value)
+        index = len(self.heap) - 1
+        while index > 0:
+            parent = (index - 1) // 2
+            if self.heap[index] > self.heap[parent]:
+                self.swap_with_animation(index, parent)
+                index = parent
+            else:
+                break
+
+    def pop_from_heap(self):
+        """Custom pop operation for max-heap with animation."""
+        if len(self.heap) == 1:
+            self.heap.pop()
+            return
+        self.swap_with_animation(0, len(self.heap) - 1)
+        max_value = self.heap.pop()
+        index = 0
+        while True:
+            left = 2 * index + 1
+            right = 2 * index + 2
+            largest = index
+
+            if left < len(self.heap) and self.heap[left] > self.heap[largest]:
+                largest = left
+            if right < len(self.heap) and self.heap[right] > self.heap[largest]:
+                largest = right
+            if largest == index:
+                break
+            self.swap_with_animation(index, largest)
+            index = largest
+
+    def swap_with_animation(self, index1, index2):
+        """Animate the swap between two nodes."""
+        self.heap[index1], self.heap[index2] = self.heap[index2], self.heap[index1]
+        self.display_heap()
+        self.canvas.update()
+        time.sleep(0.5)
 
     def display_heap(self):
         """Visualize the heap as a tree."""
@@ -85,51 +133,45 @@ class MaxHeapVisualizer:
         if not self.heap:
             self.status_label.config(text="Heap Status: []")
             return
-        
-        # Update heap status (convert negated values back to positive)
-        current_heap = [-x for x in self.heap]
-        self.status_label.config(text=f"Heap Status: {current_heap}")
-        
+
+        # Update heap status
+        self.status_label.config(text=f"Heap Status: {self.heap}")
+
         # Draw the heap as a tree
-        tree_width = 50
-        tree_height = 50
         level_gap = 70
-        
+        node_radius = 20
+        canvas_width = 800
+        canvas_height = 400
+
         def draw_node(value, x, y):
             """Draw a single node."""
-            self.canvas.create_oval(x - 20, y - 20, x + 20, y + 20, fill="lightblue")
+            self.canvas.create_oval(x - node_radius, y - node_radius, x + node_radius, y + node_radius, fill="lightblue")
             self.canvas.create_text(x, y, text=str(value), font=("Arial", 12, "bold"))
-        
+
         def draw_tree(index, x, y, dx):
             """Recursively draw the heap as a tree."""
-            if index >= len(current_heap):
+            if index >= len(self.heap):
                 return
-            draw_node(current_heap[index], x, y)
-            
+            draw_node(self.heap[index], x, y)
+
             left_child = 2 * index + 1
             right_child = 2 * index + 2
-            
-            if left_child < len(current_heap):
-                # Draw left line
-                self.canvas.create_line(x, y + 20, x - dx, y + level_gap - 20, arrow=tk.LAST)
+
+            if left_child < len(self.heap):
+                self.canvas.create_line(x, y + node_radius, x - dx, y + level_gap - node_radius, arrow=tk.LAST)
                 draw_tree(left_child, x - dx, y + level_gap, dx // 2)
-            
-            if right_child < len(current_heap):
-                # Draw right line
-                self.canvas.create_line(x, y + 20, x + dx, y + level_gap - 20, arrow=tk.LAST)
+
+            if right_child < len(self.heap):
+                self.canvas.create_line(x, y + node_radius, x + dx, y + level_gap - node_radius, arrow=tk.LAST)
                 draw_tree(right_child, x + dx, y + level_gap, dx // 2)
 
         # Start drawing the heap
-        draw_tree(0, 400, 50, 150)
+        draw_tree(0, canvas_width // 2, 50, 150)
 
-    def clear(self):
-        """Clear the heap."""
-        self.heap = []
-        self.display_heap()
 
 # Main program
 if __name__ == "__main__":
     root = tk.Tk()
-    root.title("Max Heap Visualizer")
+    root.title("Max Heap Visualizer with Animation")
     app = MaxHeapVisualizer(root)
     root.mainloop()
