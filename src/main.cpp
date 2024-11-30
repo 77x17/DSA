@@ -211,9 +211,11 @@ public:
     
     // Hàm in toàn bộ heap
     void print() const {
-        std::cout << "heap[] = { \n";
-        if (empty()) std::cout << "Empty "; // Nếu heap rỗng
-        
+        std::cout << "heap[] = { ";
+        if (empty()) {
+            std::cout << "Empty }\n"; // Nếu heap rỗng
+            return;
+        }
         std::deque<Node*> dq;
         dq.push_back(root);
         while (dq.size()) {
@@ -246,6 +248,10 @@ void demo(priority_queue pq) {
 
     std::cout << "\nSize of the priority queue: " << pq.size() << "\n"; 
 
+    std::cout << "\nRemoving all elements from the priority queue:\n";
+    pq.remove();
+    pq.print(); 
+
     arr = {1, 2, 3, 4, 5, 6, 7, 8, 9};
     std::cout << "\nBuilding heap from an array: ";
     for (int x : arr) std::cout << x << ' ';
@@ -253,15 +259,22 @@ void demo(priority_queue pq) {
     pq.build(arr);
     pq.print();  
 
-    std::cout << "\nRemoving all elements from the priority queue:\n";
-    pq.remove();
-    pq.print();  
+    std::cout << "\nExtract all: \n";
+    while (pq.size()) {
+        std::cout << pq.top() << ' ';
+        pq.pop();
+    }
+    std::cout << '\n';
 }
 
 int main() {
+    std::cout << "Priority Queue (Max) by Array:\n";
     PriorityQueueByArray pq;
     demo(pq);
 
+    std::cout << '\n';
+    std::cout << "-------------------------\n";
+    std::cout << "Priority Queue (Max) by List:\n";
     PriorityQueueByList pq_;
     demo(pq_);
 
