@@ -91,7 +91,7 @@ class MaxHeapVisualizer:
         self.heap.append(value)  # Thêm nút mới vào cuối heap
         self.display_heap(highlight_index=len(self.heap) - 1)  # Highlight nút vừa thêm
         self.canvas.update()  # Cập nhật giao diện
-        time.sleep(1)  # Tạm dừng để người dùng quan sát
+        time.sleep(0.5)  # Tạm dừng để người dùng quan sát
 
         # Tiến hành hoán đổi nếu cần để duy trì tính chất max-heap
         index = len(self.heap) - 1
