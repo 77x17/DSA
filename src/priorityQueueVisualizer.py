@@ -88,12 +88,17 @@ class MaxHeapVisualizer:
 
     def push_to_heap(self, value):
         """Custom push operation for max-heap with animation."""
-        self.heap.append(value)
+        self.heap.append(value)  # Thêm nút mới vào cuối heap
+        self.display_heap()  # Hiển thị heap ngay lập tức sau khi thêm
+        self.canvas.update()  # Cập nhật giao diện
+        time.sleep(1)  # Tạm dừng để người dùng quan sát
+
+        # Tiến hành hoán đổi nếu cần để duy trì tính chất max-heap
         index = len(self.heap) - 1
         while index > 0:
             parent = (index - 1) // 2
             if self.heap[index] > self.heap[parent]:
-                self.swap_with_animation(index, parent)
+                self.swap_with_animation(index, parent)  # Gọi hàm hoán đổi có hiệu ứng
                 index = parent
             else:
                 break
@@ -121,54 +126,11 @@ class MaxHeapVisualizer:
             index = largest
 
     def swap_with_animation(self, index1, index2):
-        """Animate the swap between two nodes, highlighting them."""
-        x1, y1 = self.get_node_coordinates(index1)
-        x2, y2 = self.get_node_coordinates(index2)
-
-        # Highlight the nodes being swapped
-        self.highlight_node(index1, "red")
-        self.highlight_node(index2, "red")
-        self.canvas.update()
-        time.sleep(0.5)  # Pause to highlight the nodes
-
-        # Perform the swap
+        """Animate the swap between two nodes."""
         self.heap[index1], self.heap[index2] = self.heap[index2], self.heap[index1]
-
-        # Update the display with swapped nodes
         self.display_heap()
-        time.sleep(0.5)  # Pause to observe the new positions
-
-    def highlight_node(self, index, color):
-        """Highlight a node in the heap."""
-        x, y = self.get_node_coordinates(index)
-        radius = 20
-        self.canvas.create_oval(
-            x - radius, y - radius, x + radius, y + radius, outline=color, width=4
-        )
-
-    def get_node_coordinates(self, index):
-        """Get the coordinates of a node based on its index in the heap."""
-        level_gap = 70
-        node_radius = 20
-        canvas_width = 800
-
-        # Calculate the level and position within the level
-        level = 0
-        count = 1
-        while index >= count:
-            index -= count
-            count *= 2
-            level += 1
-
-        # Calculate the horizontal position within the level
-        position_in_level = index
-        num_nodes_at_level = 2 ** level
-        horizontal_spacing = canvas_width // (num_nodes_at_level + 1)
-
-        x = (position_in_level + 1) * horizontal_spacing
-        y = 50 + level * level_gap
-
-        return x, y
+        self.canvas.update()
+        time.sleep(1)
 
     def display_heap(self):
         """Visualize the heap as a tree."""
@@ -181,10 +143,14 @@ class MaxHeapVisualizer:
         self.status_label.config(text=f"Heap Status: {self.heap}")
 
         # Draw the heap as a tree
+        level_gap = 70
+        node_radius = 20
+        canvas_width = 800
+        canvas_height = 400
+
         def draw_node(value, x, y):
             """Draw a single node."""
-            radius = 20
-            self.canvas.create_oval(x - radius, y - radius, x + radius, y + radius, fill="lightblue")
+            self.canvas.create_oval(x - node_radius, y - node_radius, x + node_radius, y + node_radius, fill="lightblue")
             self.canvas.create_text(x, y, text=str(value), font=("Arial", 12, "bold"))
 
         def draw_tree(index, x, y, dx):
@@ -197,20 +163,15 @@ class MaxHeapVisualizer:
             right_child = 2 * index + 2
 
             if left_child < len(self.heap):
-                self.canvas.create_line(
-                    x, y + 20, x - dx, y + 70 - 20, arrow=tk.LAST
-                )
-                draw_tree(left_child, x - dx, y + 70, dx // 2)
+                self.canvas.create_line(x, y + node_radius, x - dx, y + level_gap - node_radius, arrow=tk.LAST)
+                draw_tree(left_child, x - dx, y + level_gap, dx // 2)
 
             if right_child < len(self.heap):
-                self.canvas.create_line(
-                    x, y + 20, x + dx, y + 70 - 20, arrow=tk.LAST
-                )
-                draw_tree(right_child, x + dx, y + 70, dx // 2)
+                self.canvas.create_line(x, y + node_radius, x + dx, y + level_gap - node_radius, arrow=tk.LAST)
+                draw_tree(right_child, x + dx, y + level_gap, dx // 2)
 
         # Start drawing the heap
-        draw_tree(0, 400, 50, 150)
-
+        draw_tree(0, canvas_width // 2, 50, 150)
 
 
 # Main program
