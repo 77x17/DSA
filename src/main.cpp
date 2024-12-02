@@ -1,9 +1,4 @@
-/*
-    The following code snippets represent a max priority queue.
-*/
-
 #include <iostream>
-
 #include <vector>   
 #include <queue>
 
@@ -123,6 +118,68 @@ private:
         }
         return nullptr; // Trường hợp không tìm thấy (không xảy ra)
     }
+
+    // Hàm tạo node mới
+    Node* createNode(int value) {
+        Node* node = new Node();
+        node->value = value;
+        node->left = node->right = node->parent = nullptr;
+        return node;
+    }
+
+    // Hàm chuyển đổi số thành chuỗi biểu diễn nhị phân
+    std::string binaryRepresentation(int number) {
+        std::string result = "";
+        while (number > 0) {
+            char bit = (number % 2) + '0'; // Lấy bit cuối cùng và chuyển thành ký tự
+            result = bit + result;         // Ghép vào đầu chuỗi
+            number /= 2;                   // Chia lấy nguyên
+        }
+        return result;
+    }
+
+    // Hàm tìm điểm chèn tiếp theo
+    Node* findInsertionPoint() {
+        std::string path = binaryRepresentation(heapSize + 1); // Biểu diễn nhị phân của (size + 1)
+        path.erase(0, 1); // Loại bỏ bit đầu tiên (gốc không cần duyệt)
+        
+        Node* dummy = root;
+        for (size_t i = 0; i < path.length() - 1; i++) { // Duyệt đến nút cha của vị trí chèn
+            if (path[i] == '0') {
+                dummy = dummy->left;
+            } else {
+                dummy = dummy->right;
+            }
+        }
+        return dummy;
+    }
+
+    // Hàm xóa node cuối cùng
+    void deleteLastNode() {
+        Node* parent = last->parent;
+        if (parent->right == last) {
+            parent->right = nullptr; // Gỡ liên kết với con phải
+        } else {
+            parent->left = nullptr;  // Gỡ liên kết với con trái
+        }
+        delete last; // Giải phóng bộ nhớ cho node cuối cùng
+    }
+
+    // Hàm tìm node cuối cùng
+    Node* findLastNode() {
+        std::string path = binaryRepresentation(heapSize); // Biểu diễn nhị phân của size
+        path.erase(0, 1); // Loại bỏ bit đầu tiên (gốc không cần duyệt)
+
+        Node* dummy = root;
+        for (size_t i = 0; i < path.length(); ++i) { // Duyệt theo chuỗi nhị phân
+            if (path[i] == '0') {
+                dummy = dummy->left;
+            } else {
+                dummy = dummy->right;
+            }
+        }
+        return dummy;
+    }
 public:
     // Kiểm tra heap có rỗng hay không
     bool empty() const { return root == nullptr; }
@@ -130,23 +187,21 @@ public:
     // Trả về kích thước của heap
     int size() const { return heapSize; }
 
-    // Thêm một phần tử mới vào heap
+    // Hàm thêm phần tử mới vào heap
     void push(int x) {
-        Node *newNode = new Node(); newNode->value = x; // Tạo node mới
-
-        if (empty()) {
+        Node* newNode = createNode(x); // Tạo node mới
+        if (root == nullptr) {
             root = last = newNode; // Nếu heap rỗng, node mới là gốc
         } else {
-            Node* parent = getInsertionPoint(); // Tìm vị trí chèn
-
-            if (not parent->left) {
-                parent->left  = newNode; // Chèn vào con trái
+            Node* parent = findInsertionPoint(); // Tìm vị trí chèn
+            if (parent->left == nullptr) {
+                parent->left = newNode; // Chèn vào con trái
             } else {
                 parent->right = newNode; // Chèn vào con phải
             }
             newNode->parent = parent; // Gán node cha
-            last = newNode;           // Cập nhật node cuối cùng
         }
+        last = newNode; // Cập nhật node cuối
         heapSize++; // Tăng kích thước heap
         heapifyUp(newNode); // Duy trì tính chất heap
     }
@@ -158,43 +213,35 @@ public:
         return root->value;
     }
 
-    // Xóa phần tử lớn nhất (gốc của heap)
+    // Hàm xóa phần tử lớn nhất (gốc của heap)
     void pop() {
-        if (empty()) throw std::runtime_error("Heap is empty");
-
-        if (size() == 1) {
-            // Nếu chỉ có một phần tử, xóa node gốc
+        if (root == nullptr) {
+            throw std::runtime_error("Heap is empty");
+        }
+        if (heapSize == 1) {
+            // Nếu chỉ có một phần tử
             delete root;
             root = last = nullptr;
+            heapSize--;
         } else {
-            // Hoán đổi giá trị của gốc và node cuối cùng
+            // Hoán đổi giá trị giữa gốc và node cuối cùng
             std::swap(root->value, last->value);
 
             // Xóa node cuối cùng
-            Node *parent = last->parent;
-            if (parent->right == last) {
-                parent->right = nullptr;
-            } else {
-                parent->left  = nullptr;
-            }
-            delete last;
+            deleteLastNode();
+            heapSize--;
 
-            // Tìm lại node cuối cùng mới
-            Node *dummy = root;
-            while (dummy->left or dummy->right) {
-                if (dummy->right) {
-                    dummy = dummy->right;
-                } else {
-                    dummy = dummy->left;
-                }
+            if (heapSize > 1) {
+                // Tìm lại node cuối cùng
+                last = findLastNode();
+            } else {
+                // Nếu chỉ còn một node, nó là node cuối cùng
+                last = root;
             }
-            last = dummy;
 
             // Duy trì tính chất heap
             heapifyDown(root);
         }
-
-        heapSize--; // Giảm kích thước heap
     }
 
     // Xóa toàn bộ heap
