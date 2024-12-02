@@ -89,7 +89,7 @@ class MaxHeapVisualizer:
     def push_to_heap(self, value):
         """Custom push operation for max-heap with animation."""
         self.heap.append(value)  # Thêm nút mới vào cuối heap
-        self.display_heap()  # Hiển thị heap ngay lập tức sau khi thêm
+        self.display_heap(highlight_index=len(self.heap) - 1)  # Highlight nút vừa thêm
         self.canvas.update()  # Cập nhật giao diện
         time.sleep(1)  # Tạm dừng để người dùng quan sát
 
@@ -102,6 +102,7 @@ class MaxHeapVisualizer:
                 index = parent
             else:
                 break
+
 
     def pop_from_heap(self):
         """Custom pop operation for max-heap with animation."""
@@ -126,14 +127,25 @@ class MaxHeapVisualizer:
             index = largest
 
     def swap_with_animation(self, index1, index2):
-        """Animate the swap between two nodes."""
+        """Animate the swap between two nodes with highlighting."""
+        # Highlight the nodes being swapped
+        self.display_heap(highlight_index=index1)
+        self.canvas.update()
+        time.sleep(0.5)
+
+        self.display_heap(highlight_index=index2)
+        self.canvas.update()
+        time.sleep(0.5)
+
+        # Perform the swap
         self.heap[index1], self.heap[index2] = self.heap[index2], self.heap[index1]
         self.display_heap()
         self.canvas.update()
-        time.sleep(1)
+        time.sleep(0.5)
 
-    def display_heap(self):
-        """Visualize the heap as a tree."""
+
+    def display_heap(self, highlight_index=None):
+        """Visualize the heap as a tree, optionally highlighting a specific node."""
         self.canvas.delete("all")
         if not self.heap:
             self.status_label.config(text="Heap Status: []")
@@ -148,16 +160,17 @@ class MaxHeapVisualizer:
         canvas_width = 800
         canvas_height = 400
 
-        def draw_node(value, x, y):
-            """Draw a single node."""
-            self.canvas.create_oval(x - node_radius, y - node_radius, x + node_radius, y + node_radius, fill="lightblue")
+        def draw_node(value, x, y, highlight=False):
+            """Draw a single node with optional highlight."""
+            color = "yellow" if highlight else "lightblue"
+            self.canvas.create_oval(x - node_radius, y - node_radius, x + node_radius, y + node_radius, fill=color)
             self.canvas.create_text(x, y, text=str(value), font=("Arial", 12, "bold"))
 
         def draw_tree(index, x, y, dx):
             """Recursively draw the heap as a tree."""
             if index >= len(self.heap):
                 return
-            draw_node(self.heap[index], x, y)
+            draw_node(self.heap[index], x, y, highlight=(index == highlight_index))
 
             left_child = 2 * index + 1
             right_child = 2 * index + 2
@@ -172,6 +185,7 @@ class MaxHeapVisualizer:
 
         # Start drawing the heap
         draw_tree(0, canvas_width // 2, 50, 150)
+
 
 
 # Main program
